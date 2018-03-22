@@ -1,0 +1,8 @@
+version: '3'
+services:
+  env-aws-params:
+    build: .
+    image: env-aws-params
+    volumes:
+      - .:/go/src/github.com/env-aws-params
+      - /go/src/github.com/env-aws-params/vendor

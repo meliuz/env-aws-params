@@ -40,15 +40,32 @@ func (c *SSMClient) GetParametersByPath(path string) (map[string]string, error) 
 	if strings.HasSuffix(path, "/") != true {
 		path = fmt.Sprintf("%s/", path)
 	}
+
+	var nextToken *string = nil
 	parameters := make(map[string]string)
-	params := &ssm.GetParametersByPathInput{
-		Path:           aws.String(path),
-		Recursive:      aws.Bool(true),
-		WithDecryption: aws.Bool(true),
+
+	for {
+		params := &ssm.GetParametersByPathInput{
+			NextToken:      nextToken,
+			Path:           aws.String(path),
+			Recursive:      aws.Bool(true),
+			WithDecryption: aws.Bool(true),
+		}
+
+		response, err := c.client.GetParametersByPath(params)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, p := range response.Parameters {
+			parameters[strings.TrimPrefix(*p.Name, path)] = *p.Value
+		}
+
+		nextToken = response.NextToken
+		if nextToken == nil {
+			break
+		}
 	}
-	response, err := c.client.GetParametersByPath(params)
-	for _, p := range response.Parameters {
-		parameters[strings.TrimPrefix(*p.Name, path)] = *p.Value
-	}
-	return parameters, err
+
+	return parameters, nil
 }

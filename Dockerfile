@@ -1,4 +1,4 @@
-FROM golang:1.9
+FROM golang:1.9.5
 
 ENV APPLICATION_NAME env-aws-params
 

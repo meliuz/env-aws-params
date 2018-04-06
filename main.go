@@ -42,6 +42,10 @@ func cliFlags() []cli.Flag {
 			Usage: "Only use values retrieved from Parameter Store, do not inherit the existing environment variables",
 		},
 		cli.BoolFlag{
+			Name:  "basename",
+			Usage: "Only use basename of variable path",
+		},
+		cli.BoolFlag{
 			Name:  "sanitize",
 			Usage: "Replace invalid characters in keys to underscores",
 		},
@@ -69,6 +73,7 @@ func action(c *cli.Context) error {
 
 	envVars := BuildEnvVars(
 		params,
+		c.GlobalBool("basename"),
 		c.GlobalBool("sanitize"),
 		c.GlobalBool("strip"),
 		c.GlobalBool("upcase"))

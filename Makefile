@@ -13,5 +13,14 @@ build-no-cache:
 	@docker-compose build --no-cache --pull
 	@docker-compose run --rm ${APPLICATION_NAME} go build
 
+down:
+	@docker-compose down
+
 fmt:
 	@docker-compose run --rm ${APPLICATION_NAME} go fmt
+
+run:
+	@docker-compose run --rm ${APPLICATION_NAME} ./${APPLICATION_NAME} ${PARAMS}
+
+test:
+	@docker-compose run --rm ${APPLICATION_NAME} go test

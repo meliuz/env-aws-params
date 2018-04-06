@@ -2,16 +2,20 @@ package main
 
 import (
 	"fmt"
+	"path"
 	"regexp"
 	"strings"
 )
 
 var InvalidPattern = regexp.MustCompile(`[^a-zA-Z0-9_]`)
 
-func BuildEnvVars(parameters map[string]string, sanitize bool, strip bool, upcase bool) []string {
+func BuildEnvVars(parameters map[string]string, basename bool, sanitize bool, strip bool, upcase bool) []string {
 	var vars []string
 
 	for k, v := range parameters {
+		if basename == true {
+			k = path.Base(k)
+		}
 		if sanitize == true {
 			k = InvalidPattern.ReplaceAllString(k, "_")
 		}

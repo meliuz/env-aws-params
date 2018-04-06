@@ -27,7 +27,7 @@ func TestBuildEnvVarsUpcaseFalse(t *testing.T) {
 	params["FOO"] = "bar"
 
 	expectation := []string{"baz=qux", "FOO=bar"}
-	envvars := BuildEnvVars(params, false, false, false)
+	envvars := BuildEnvVars(params, false, false, false, false)
 	AssertEqual(t, envvars, expectation)
 }
 
@@ -39,7 +39,7 @@ func TestBuildEnvVarsUpcaseTrue(t *testing.T) {
 	params["FOO"] = "bar"
 
 	expectation := []string{"BAZ=qux", "FOO=bar"}
-	envVars := BuildEnvVars(params, false, false, true)
+	envVars := BuildEnvVars(params, false, false, false, true)
 	AssertEqual(t, envVars, expectation)
 }
 
@@ -52,7 +52,20 @@ func TestBuildEnvVarsUpperSanitize(t *testing.T) {
 	params["wE_irD-kEY!"] = "zaphod"
 
 	expectation := []string{"BAZ_CORGIE=qux", "FOO=bar", "WE_IRD_KEY_=zaphod"}
-	envVars := BuildEnvVars(params, true, false, true)
+	envVars := BuildEnvVars(params, false, true, false, true)
+	AssertEqual(t, envVars, expectation)
+}
+
+func TestBuildEnvVarsUpperSanitizeBasename(t *testing.T) {
+	var params map[string]string
+
+	params = make(map[string]string)
+	params["brI-nox/FOO"] = "bar"
+	params["baz/corgie"] = "qux"
+	params["JOm/PolH/wE_irD-kEY!"] = "zaphod"
+
+	expectation := []string{"CORGIE=qux", "FOO=bar", "WE_IRD_KEY_=zaphod"}
+	envVars := BuildEnvVars(params, true, true, false, true)
 	AssertEqual(t, envVars, expectation)
 }
 
@@ -65,6 +78,19 @@ func TestBuildEnvVarsUpperStrip(t *testing.T) {
 	params["wE_irD-kEY!"] = "zaphod"
 
 	expectation := []string{"BAZCORGIE=qux", "FOO=bar", "WE_IRDKEY=zaphod"}
-	envVars := BuildEnvVars(params, false, true, true)
+	envVars := BuildEnvVars(params, false, false, true, true)
+	AssertEqual(t, envVars, expectation)
+}
+
+func TestBuildEnvVarsUpperStripBasename(t *testing.T) {
+	var params map[string]string
+
+	params = make(map[string]string)
+	params["brI-nox/FOO"] = "bar"
+	params["baz/corgie"] = "qux"
+	params["JOm/PolH/wE_irD-kEY!"] = "zaphod"
+
+	expectation := []string{"CORGIE=qux", "FOO=bar", "WE_IRDKEY=zaphod"}
+	envVars := BuildEnvVars(params, true, false, true, true)
 	AssertEqual(t, envVars, expectation)
 }

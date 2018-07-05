@@ -2,11 +2,14 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"os"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
+	"encoding/json"
 	"strings"
+	"sort"
 )
 
 func init() {
@@ -46,6 +49,14 @@ func cliFlags() []cli.Flag {
 			Usage: "Only use basename of variable path",
 		},
 		cli.BoolFlag{
+			Name:  "output",
+			Usage: "Only print variables as output, do not run commands",
+		},
+		cli.StringFlag{
+			Name:  "output-format",
+			Usage: "Print --output flag result formatted as: export, setenv or text (Default: text)",
+		},
+		cli.BoolFlag{
 			Name:  "sanitize",
 			Usage: "Replace invalid characters in keys to underscores",
 		},
@@ -82,7 +93,31 @@ func action(c *cli.Context) error {
 		envVars = append(os.Environ(), envVars...)
 	}
 
-	RunCommand(c.Args()[0], c.Args()[1:], envVars)
+	if c.GlobalBool("output") == true {
+		// Sort the result env variables
+		sort.Strings(envVars)
+		if c.GlobalString("output-format") == "export" {
+			for _, envVar := range envVars {
+				fmt.Printf("export %#v\n", envVar)
+			}
+		} else if c.GlobalString("output-format") == "json" {
+			envVarsMap := make(map[string]string)
+			for _, envVar := range envVars {
+				x := strings.SplitN(envVar, "=", 2)
+				envVarsMap[x[0]] = x[1]
+			}
+			jsonValue, _ := json.Marshal(envVarsMap)
+			fmt.Println(string(jsonValue))
+		} else if c.GlobalString("output-format") == "setenv" {
+			for _, envVar := range envVars {
+				fmt.Printf("SetEnv %v\"\n", strings.Replace(envVar, "=", " \"", 1))
+			}
+		} else {
+			fmt.Printf("%s\n", envVars)
+		}
+	} else {
+		RunCommand(c.Args()[0], c.Args()[1:], envVars)
+	}
 
 	return nil
 }
@@ -116,12 +151,16 @@ func validateArgs(c *cli.Context) (int, error) {
 		return 1, errors.New("prefix is required")
 	}
 
-	if c.NArg() == 0 {
+	if c.NArg() == 0 && c.GlobalBool("output") == false {
 		return 2, errors.New("command not specified")
 	}
 
 	if c.GlobalBool("sanitize") == c.GlobalBool("strip") == true {
 		return 3, errors.New("--sanitize and --strip are mutually exclusive behaviors")
+	}
+
+	if c.GlobalString("output-format") != "" && c.GlobalBool("output") == false {
+		return 4, errors.New("It's required --output flag to use --output-format")
 	}
 
 	return 0, nil

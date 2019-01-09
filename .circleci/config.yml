@@ -1,0 +1,33 @@
+version: 2
+jobs:
+  build-test:
+    docker:
+      - image: meliuz/docker-deployer:latest
+        auth:
+          username: $DOCKER_USER
+          password: $DOCKER_PASS
+    steps:
+      - checkout
+      - setup_remote_docker
+
+      - run:
+          name: Docker login
+          command: |
+            docker login -u $DOCKER_USER -p $DOCKER_PASS
+
+      - run:
+          name: Docker build image
+          command: |
+            docker build --tag meliuz/${CIRCLE_PROJECT_REPONAME}:testing .
+
+      - run:
+          name: Run tests
+          command: |
+            docker run --rm meliuz/${CIRCLE_PROJECT_REPONAME}:testing go test
+
+workflows:
+  version: 2
+  meliuz-workflow:
+    jobs:
+      - build-test:
+          context: global

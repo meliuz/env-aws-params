@@ -7,11 +7,11 @@ all: build
 
 build:
 	@docker-compose build --pull
-	@docker-compose run --rm ${APPLICATION_NAME} go build
+	@docker run -v $$PWD:/src --rm ${APPLICATION_NAME}:latest cp ${APPLICATION_NAME} /src
 
 build-no-cache:
 	@docker-compose build --no-cache --pull
-	@docker-compose run --rm ${APPLICATION_NAME} go build
+	@docker run -v $$PWD:/src --rm ${APPLICATION_NAME}:latest cp ${APPLICATION_NAME} /src
 
 down:
 	@docker-compose down

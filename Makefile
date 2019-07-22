@@ -1,4 +1,4 @@
-.PHONY: all build build-no-cache fmt
+.PHONY: all build build-no-cache fmt lint
 
 # Params for env-aws-params dev environment
 APPLICATION_NAME=env-aws-params
@@ -24,3 +24,11 @@ run:
 
 test:
 	@docker-compose run --rm ${APPLICATION_NAME} go test
+
+lint:
+	@docker pull meliuz/docker-linter:latest
+	@docker run --rm -v $$PWD:/app meliuz/docker-linter:latest " \
+		lint-commit origin/master \
+		&& lint-dockerfile \
+		&& lint-markdown \
+		&& lint-yaml"

@@ -15,50 +15,33 @@ in the SSM Parameter store. It was directly inspired by
 [envconsul](https://github.com/hashicorp/envconsul).
 
 ## Example Usage
+
 Create parameters in Parameter Store:
+
 ```bash
 aws ssm put-parameter --name /service-prefix/ENV_VAR1 --value example
 aws ssm put-parameter --name /service-prefix/ENV_VAR2 --value test-value
 ```
 
 Then use ``env-aws-params`` to have bash display the env vars it was called with:
+
 ```bash
 env-aws-params --prefix /service-prefix /bin/bash -c set
 ```
 
 If you want to include common and service specific values, ``--prefix`` can be specified
 multiple times:
+
 ```bash
 env-aws-params --prefix /common /bin/bash -c set
 ```
 
 ## CLI Options
 
-```
-NAME:
-   env-aws-params - Application entry-point that injects SSM Parameter Store values as Environment Variables
-
-USAGE:
-   env-aws-params [global options] -p prefix command [command arguments]
-
-VERSION:
-   0.0.0
-
-COMMANDS:
-     help, h  Shows a list of commands or help for one command
-
-GLOBAL OPTIONS:
-   --aws-region value        The AWS region to use for the Parameter Store API [$AWS_REGION]
-   --prefix value, -p value  Key prefix that is used to retrieve the environment variables - supports multiple use
-   --pristine                Only use values retrieved from Parameter Store, do not inherit the existing environment variables
-   --sanitize                Replace invalid characters in keys to underscores
-   --strip                   Strip invalid characters in keys
-   --upcase                  Force keys to uppercase
-   --help, -h                show help
-   --version, -v             print the version
-```
+Run `env-aws-params --help` for available options.
 
 ## Building
+
 This project uses [dep](http://github.com/golang/dep). To build the project:
 
 ```bash

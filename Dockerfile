@@ -1,4 +1,4 @@
-FROM golang:1.9.5
+FROM golang:1.9.5 AS builder
 
 ENV APPLICATION_NAME env-aws-params
 
@@ -16,3 +16,10 @@ RUN dep ensure -vendor-only
 
 COPY . .
 RUN go build
+
+FROM scratch
+
+ENV APPLICATION_NAME env-aws-params
+
+WORKDIR /app
+COPY --from=builder /go/src/github.com/${APPLICATION_NAME} .

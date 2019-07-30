@@ -15,6 +15,12 @@ commands:
           name: Log into Docker Hub
           command: docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
 
+  load-env:
+    steps:
+      - run:
+          name: Load environment variables
+          command: echo "export $(grep -v '^#' .env | tr '\r\n' ' ')" >> ${BASH_ENV}
+
 jobs:
   lint:
     docker:
@@ -41,14 +47,11 @@ jobs:
       - checkout
       - setup_remote_docker
       - docker-login
+      - load-env
 
       - run:
           name: Build image
-          command: build-image meliuz/${CIRCLE_PROJECT_REPONAME}:testing
-
-      - run:
-          name: Run tests
-          command: docker run --rm meliuz/${CIRCLE_PROJECT_REPONAME}:testing go test
+          command: build-image meliuz/${CIRCLE_PROJECT_REPONAME}:testing . APPLICATION_NAME
 
       - run:
           name: Save image

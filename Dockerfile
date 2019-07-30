@@ -1,6 +1,6 @@
 FROM golang:1.9.5 AS builder
 
-ENV APPLICATION_NAME env-aws-params
+ARG APPLICATION_NAME
 
 RUN apt-get update && apt-get install -y unzip --no-install-recommends && \
     apt-get autoremove -y && apt-get clean -y && \
@@ -15,11 +15,11 @@ COPY Gopkg.toml Gopkg.lock ./
 RUN dep ensure -vendor-only
 
 COPY . .
-RUN go build
+RUN go build && go test
 
 FROM scratch
 
-ENV APPLICATION_NAME env-aws-params
+ARG APPLICATION_NAME
 
 WORKDIR /app
 COPY --from=builder /go/src/github.com/${APPLICATION_NAME} .

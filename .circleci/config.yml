@@ -1,33 +1,127 @@
-version: 2
-jobs:
-  build-test:
+version: 2.1
+
+executors:
+  docker-builder:
     docker:
-      - image: meliuz/docker-deployer:latest
+      - image: meliuz/docker-builder:latest
         auth:
           username: $DOCKER_USER
           password: $DOCKER_PASS
+
+commands:
+  docker-login:
+    steps:
+      - run:
+          name: Log into Docker Hub
+          command: docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
+
+  load-env:
+    steps:
+      - run:
+          name: Load environment variables
+          command: echo "export $(grep -v '^#' .env | tr '\r\n' ' ')" >> ${BASH_ENV}
+
+jobs:
+  lint:
+    docker:
+      - image: meliuz/docker-linter:latest
+        auth:
+          username: $DOCKER_USER
+          password: $DOCKER_PASS
+
+    steps:
+      - checkout
+
+      - run:
+          name: Lint project files
+          command: |
+            docker-entrypoint " \
+              lint-commit origin/master && \
+              lint-dockerfile && \
+              lint-markdown && \
+              lint-yaml"
+
+  build:
+    executor: docker-builder
     steps:
       - checkout
       - setup_remote_docker
+      - docker-login
+      - load-env
 
       - run:
-          name: Docker login
-          command: |
-            docker login -u $DOCKER_USER -p $DOCKER_PASS
+          name: Build image
+          command: build-image meliuz/${CIRCLE_PROJECT_REPONAME}:testing . APPLICATION_NAME
 
       - run:
-          name: Docker build image
+          name: Save image
           command: |
-            docker build --tag meliuz/${CIRCLE_PROJECT_REPONAME}:testing .
+            mkdir -p cache
+
+            if [ "${CIRCLE_TAG}" = "" ]; then
+              circleci step halt
+            fi
+
+            docker save \
+              -o cache/${CIRCLE_PROJECT_REPONAME}-${CIRCLE_TAG}.tar \
+              meliuz/${CIRCLE_PROJECT_REPONAME}:testing
+
+      - persist_to_workspace:
+          root: cache
+          paths:
+            - "*.tar"
+
+  push:
+    executor: docker-builder
+    steps:
+      - setup_remote_docker
+
+      - attach_workspace:
+          at: cache
+
+      - docker-login
 
       - run:
-          name: Run tests
+          name: Load saved image
+          command: docker load -i cache/${CIRCLE_PROJECT_REPONAME}-${CIRCLE_TAG}.tar
+
+      - run:
+          name: Push image
           command: |
-            docker run --rm meliuz/${CIRCLE_PROJECT_REPONAME}:testing go test
+            IMAGE_NAME=meliuz/${CIRCLE_PROJECT_REPONAME}
+
+            push-image ${IMAGE_NAME}:testing latest
+            push-image ${IMAGE_NAME}:testing ${CIRCLE_TAG}
 
 workflows:
-  version: 2
+  version: 2.1
+
   meliuz-workflow:
     jobs:
-      - build-test:
+      - lint:
           context: global
+          filters:
+            branches:
+              ignore: master
+            tags:
+              only: /.*/
+
+      - build:
+          context: global
+          requires:
+            - lint
+          filters:
+            branches:
+              ignore: master
+            tags:
+              only: /.*/
+
+      - push:
+          context: global
+          requires:
+            - build
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^[0-9]+(\.[0-9]+){2}$/

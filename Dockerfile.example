@@ -1,0 +1,6 @@
+FROM python:3.7.3
+
+ARG APPLICATION_NAME
+
+WORKDIR /app
+COPY --from=env-aws-params:development /app/${APPLICATION_NAME} .

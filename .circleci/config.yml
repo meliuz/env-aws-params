@@ -3,7 +3,7 @@ version: 2.1
 executors:
   docker-builder:
     docker:
-      - image: meliuz/docker-builder:latest
+      - image: meliuz/docker-builder:1.0.0
         auth:
           username: $DOCKER_USER
           password: $DOCKER_PASS
@@ -15,16 +15,10 @@ commands:
           name: Log into Docker Hub
           command: docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
 
-  load-env:
-    steps:
-      - run:
-          name: Load environment variables
-          command: echo "export $(grep -v '^#' .env | tr '\r\n' ' ')" >> ${BASH_ENV}
-
 jobs:
   lint:
     docker:
-      - image: meliuz/docker-linter:latest
+      - image: meliuz/docker-linter:1.2.0
         auth:
           username: $DOCKER_USER
           password: $DOCKER_PASS
@@ -47,11 +41,13 @@ jobs:
       - checkout
       - setup_remote_docker
       - docker-login
-      - load-env
 
       - run:
           name: Build image
-          command: build-image meliuz/${CIRCLE_PROJECT_REPONAME}:testing . APPLICATION_NAME
+          command: |
+            export APPLICATION_NAME=${CIRCLE_PROJECT_REPONAME}
+
+            build-image meliuz/${CIRCLE_PROJECT_REPONAME}:testing . APPLICATION_NAME
 
       - run:
           name: Save image

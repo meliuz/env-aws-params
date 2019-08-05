@@ -22,4 +22,4 @@ FROM scratch
 ARG APPLICATION_NAME
 
 WORKDIR /app
-COPY --from=builder /go/src/github.com/${APPLICATION_NAME} .
+COPY --from=builder /go/src/github.com/${APPLICATION_NAME}/${APPLICATION_NAME} .
